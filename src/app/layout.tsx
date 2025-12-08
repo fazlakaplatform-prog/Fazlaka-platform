@@ -1,3 +1,4 @@
+// src/app/layout.tsx
 import './globals.css'
 import { Inter } from 'next/font/google'
 import { Toaster } from 'react-hot-toast'
@@ -9,6 +10,7 @@ import ChatbotWidget from "@/components/Chatbot/ChatbotWidget"
 import AuthFieldChecker from "@/components/AuthProvider/AuthFieldChecker"
 import { NotificationsProvider } from "@/components/Notifications/NotificationsProvider"
 import NotificationToastsContainer from "@/components/Notifications/NotificationToastsContainer"
+import WelcomeModal from "@/components/Auth/WelcomeModal" // استيراد المكون الجديد
 import connectDB from '@/lib/mongoose'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -51,6 +53,8 @@ export default async function RootLayout({
               <AuthFieldChecker />
               {/* إضافة حاوية الإشعارات العائمة */}
               <NotificationToastsContainer />
+              {/* إضافة مربع الترحيب الجديد */}
+              <WelcomeModal />
             </NotificationsProvider>
           </LanguageProvider>
         </AuthProvider>
