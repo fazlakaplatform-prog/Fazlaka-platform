@@ -1,7 +1,7 @@
-// src/app/api/stream/notify/route.ts
+// File: src/app/api/stream/notify/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
-import { sendToAllClients } from '../streamClients'; // الاستيراد من الملف المركزي
+import { sendToAllClients } from '../streamClients';
 
 export async function POST(request: NextRequest) {
   try {

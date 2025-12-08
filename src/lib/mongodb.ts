@@ -1,6 +1,6 @@
 // File: src/lib/mongodb.ts
 
-import { MongoClient, Db } from 'mongodb';
+import { MongoClient, Db, ObjectId } from 'mongodb'; // <-- 1. تأكد من إضافة ObjectId هنا
 import mongoose from 'mongoose';
 
 // التحقق من وجود متغير البيئة
@@ -106,7 +106,7 @@ if (process.env.NODE_ENV === 'development') {
   clientPromise = client.connect();
 }
 
-// دالة للحصول على قاعدة البيانات
+// دالة للحصول على قاعدة البيانات (سنستخدم هذه للـ Change Streams)
 export async function getDatabase(): Promise<Db> {
   if (!database) {
     const client = await clientPromise;
@@ -117,3 +117,6 @@ export async function getDatabase(): Promise<Db> {
 
 // تصدير الوعد الخاص بالعميل للاستخدام المباشر إذا لزم الأمر
 export default clientPromise;
+
+// <-- 2. قم بإضافة هذا السطر لتصدير ObjectId
+export { ObjectId };

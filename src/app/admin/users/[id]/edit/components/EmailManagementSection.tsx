@@ -2,9 +2,8 @@
 
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Mail, ChevronDown, ChevronUp, Star } from "lucide-react"
+import { Mail, ChevronDown, ChevronUp, Star, Send, CheckCircle, AlertCircle } from "lucide-react"
 import { useLanguage } from "@/components/Language/LanguageProvider"
-import EmailVerificationLinkSender from "@/components/EmailVerificationLinkSender"
 
 const translations = {
   ar: {
@@ -21,7 +20,13 @@ const translations = {
     directVerification: "التحقق المباشر",
     emailVerification: "التحقق عبر البريد",
     sendVerificationLink: "إرسال رابط التحقق",
-    invalidEmail: "صيغة البريد الإلكتروني غير صحيحة"
+    invalidEmail: "صيغة البريد الإلكتروني غير صحيحة",
+    sending: "جاري الإرسال...",
+    sent: "تم الإرسال بنجاح",
+    error: "حدث خطأ",
+    verificationLinkSent: "تم إرسال رابط التحقق بنجاح",
+    checkYourEmail: "يرجى التحقق من بريدك الإلكتروني",
+    linkExpiresIn: "ينتهي صلاحية الرابط خلال 24 ساعة",
   },
   en: {
     emailManagement: "Email Management",
@@ -37,7 +42,13 @@ const translations = {
     directVerification: "Direct Verification",
     emailVerification: "Email Verification",
     sendVerificationLink: "Send Verification Link",
-    invalidEmail: "Invalid email format"
+    invalidEmail: "Invalid email format",
+    sending: "Sending...",
+    sent: "Sent Successfully",
+    error: "Error",
+    verificationLinkSent: "Verification link sent successfully",
+    checkYourEmail: "Please check your email",
+    linkExpiresIn: "Link expires in 24 hours",
   }
 };
 
@@ -81,6 +92,9 @@ export default function EmailManagementSection({
   const { language } = useLanguage()
   const t = translations[language]
   const [newSecondaryEmail, setNewSecondaryEmail] = useState("")
+  
+  // State for email verification link sender
+  const [sendingStates, setSendingStates] = useState<{[key: string]: {isSending: boolean, isSent: boolean, error: string | null}}>({})
 
   const handleAddEmail = () => {
     if (!newSecondaryEmail.trim()) return
@@ -117,6 +131,119 @@ export default function EmailManagementSection({
     } as unknown as React.ChangeEvent<HTMLInputElement>;
     
     handleInputChange(syntheticEvent);
+  }
+
+  // Function to handle sending verification link
+  const handleSendVerificationLink = async (email: string, type: "primary" | "secondary", emailId?: string) => {
+    const key = emailId || email; // Use emailId for secondary emails, email for primary
+    
+    // Initialize state if not exists
+    if (!sendingStates[key]) {
+      setSendingStates(prev => ({
+        ...prev,
+        [key]: { isSending: false, isSent: false, error: null }
+      }));
+    }
+    
+    // Update state to sending
+    setSendingStates(prev => ({
+      ...prev,
+      [key]: { ...prev[key], isSending: true, error: null }
+    }));
+
+    try {
+      const response = await fetch('/api/auth/send-verification-link', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          type
+        }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setSendingStates(prev => ({
+          ...prev,
+          [key]: { ...prev[key], isSending: false, isSent: true }
+        }));
+      } else {
+        setSendingStates(prev => ({
+          ...prev,
+          [key]: { ...prev[key], isSending: false, error: data.error || t.error }
+        }));
+      }
+    } catch (error) {
+      setSendingStates(prev => ({
+        ...prev,
+        [key]: { ...prev[key], isSending: false, error: t.error }
+      }));
+    }
+  }
+
+  // Function to render the verification link sender UI
+  const renderVerificationLinkSender = (email: string, type: "primary" | "secondary", emailId?: string) => {
+    const key = emailId || email;
+    const state = sendingStates[key] || { isSending: false, isSent: false, error: null };
+    
+    return (
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <Mail className="h-5 w-5 text-gray-400 ml-2" />
+            <div>
+              <p className="text-sm font-medium text-gray-900 dark:text-white">
+                {type === "primary" ? t.email : t.secondaryEmails}
+              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {email}
+              </p>
+            </div>
+          </div>
+          
+          {state.isSent ? (
+            <div className="flex items-center text-green-600 dark:text-green-400">
+              <CheckCircle className="h-5 w-5 ml-1" />
+              <span className="text-sm">{t.sent}</span>
+            </div>
+          ) : (
+            <button
+              onClick={() => handleSendVerificationLink(email, type, emailId)}
+              disabled={state.isSending}
+              className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+            >
+              {state.isSending ? (
+                <>
+                  <div className="animate-spin rounded-full h-3 w-3 border-t-2 border-b-2 border-white ml-1"></div>
+                  {t.sending}
+                </>
+              ) : (
+                <>
+                  <Send className="h-3 w-3 ml-1" />
+                  {t.sendVerificationLink}
+                </>
+              )}
+            </button>
+          )}
+        </div>
+        
+        {state.error && (
+          <div className="mt-3 flex items-center text-red-600 dark:text-red-400">
+            <AlertCircle className="h-4 w-4 ml-1" />
+            <span className="text-xs">{state.error}</span>
+          </div>
+        )}
+        
+        {state.isSent && (
+          <div className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+            {t.checkYourEmail}. {t.linkExpiresIn}.
+          </div>
+        )}
+      </div>
+    );
   }
 
   return (
@@ -174,10 +301,7 @@ export default function EmailManagementSection({
                 
                 {/* Email Verification Link Sender for Primary Email */}
                 <div className="mt-3">
-                  <EmailVerificationLinkSender 
-                    email={formData.email} 
-                    type="primary" 
-                  />
+                  {renderVerificationLinkSender(formData.email, "primary")}
                 </div>
                 
                 {/* Actions for primary email */}
@@ -217,10 +341,7 @@ export default function EmailManagementSection({
                       
                       {/* Email Verification Link Sender for Secondary Email */}
                       <div className="mb-3">
-                        <EmailVerificationLinkSender 
-                          email={email.email} 
-                          type="secondary" 
-                        />
+                        {renderVerificationLinkSender(email.email, "secondary", email._id)}
                       </div>
                       
                       <div className="flex space-x-2">

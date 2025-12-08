@@ -124,16 +124,11 @@ function validatePasswordStrength(password: string): { isValid: boolean; message
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
-    // 1. التحقق من جلسة المستخدم
-    // تم إنشاء كائن جديد يحتوي فقط على الخصائص المطلوبة لـ getServerSession
-    const getServerSessionOptions = {
-      secret: authOptions.secret,
-      providers: authOptions.providers,
-    };
-    
-    const session = await getServerSession(getServerSessionOptions);
+    // 1. التحقق من جلسة المستخدم - الإصلاح الرئيسي
+    const session = await getServerSession(authOptions);
     
     if (!session?.user?.id) {
+      console.log("No session or user ID found");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
