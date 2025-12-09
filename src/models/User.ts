@@ -1,4 +1,3 @@
-// src/models/User.ts
 import mongoose from 'mongoose';
 
 // تعريف مخطط للبريد الإلكتروني الثانوي مع إضافة حقول التحقق

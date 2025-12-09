@@ -1,6 +1,4 @@
-// File: src/lib/mongodb.ts
-
-import { MongoClient, Db, ObjectId } from 'mongodb'; // <-- 1. تأكد من إضافة ObjectId هنا
+import { MongoClient, Db, ObjectId } from 'mongodb';
 import mongoose from 'mongoose';
 
 // التحقق من وجود متغير البيئة
@@ -118,5 +116,5 @@ export async function getDatabase(): Promise<Db> {
 // تصدير الوعد الخاص بالعميل للاستخدام المباشر إذا لزم الأمر
 export default clientPromise;
 
-// <-- 2. قم بإضافة هذا السطر لتصدير ObjectId
+// تصدير ObjectId للاستخدام في الملفات الأخرى
 export { ObjectId };

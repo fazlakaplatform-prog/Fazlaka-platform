@@ -55,10 +55,10 @@ export async function POST(request: NextRequest) {
       name,
       email,
       password: hashedPassword,
-      emailVerified: emailVerified, // استخدام القيمة المرسلة
-      isActive: emailVerified, // تفعيل الحساب إذا تم التحقق من البريد
-      role: "user", // تعيين الدور كمستخدم عادي
-      banned: false, // تعيين الحالة كغير محظور
+      emailVerified: emailVerified,
+      isActive: emailVerified,
+      role: "user",
+      banned: false,
       createdAt: new Date(),
       updatedAt: new Date()
     })

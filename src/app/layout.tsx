@@ -3,14 +3,14 @@ import './globals.css'
 import { Inter } from 'next/font/google'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider } from "@/components/AuthProvider/AuthProvider"
-import Navbar from "@/components/layout/Navbar"
-import Footer from "@/components/layout/Footer"
+import NavbarWrapper from "@/components/layout/NavbarWrapper" // <-- تغيير
+import FooterWrapper from "@/components/layout/FooterWrapper" // <-- تغيير
 import LanguageProvider from "@/components/Language/LanguageProvider"
 import ChatbotWidget from "@/components/Chatbot/ChatbotWidget"
 import AuthFieldChecker from "@/components/AuthProvider/AuthFieldChecker"
 import { NotificationsProvider } from "@/components/Notifications/NotificationsProvider"
 import NotificationToastsContainer from "@/components/Notifications/NotificationToastsContainer"
-import WelcomeModal from "@/components/Auth/WelcomeModal" // استيراد المكون الجديد
+import WelcomeModal from "@/components/Auth/WelcomeModal"
 import connectDB from '@/lib/mongoose'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -41,11 +41,11 @@ export default async function RootLayout({
             <NotificationsProvider>
               <Toaster position="top-center" />
               <div className="flex flex-col min-h-screen">
-                <Navbar />
+                <NavbarWrapper /> {/* <-- تغيير */}
                 <main className="flex-1 relative">
                   {children}
                 </main>
-                <Footer />
+                <FooterWrapper /> {/* <-- تغيير */}
               </div>
               {/* إضافة النافذة العائمة هنا */}
               <ChatbotWidget />

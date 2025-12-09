@@ -1,8 +1,7 @@
-// src/components/AuthFieldChecker.tsx
 "use client";
 
 import { useEffect } from "react";
-import { useSession } from "next-auth/react";
+import { useSession, signIn } from "next-auth/react";
 
 export default function AuthFieldChecker() {
   const { data: session, status } = useSession();
@@ -21,6 +20,8 @@ export default function AuthFieldChecker() {
         .then((data) => {
           if (data.updated) {
             console.log("User fields updated:", data.user);
+            // تحديث الصفحة لتحديث الجلسة
+            window.location.reload();
           }
         })
         .catch((error) => {

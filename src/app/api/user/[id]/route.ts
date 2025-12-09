@@ -1,4 +1,3 @@
-// src/app/api/users/[id]/route.ts
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
@@ -98,7 +97,6 @@ export async function PUT(
   context: { params: Promise<{ id: string }> }
 ) {
   try {
-    // تصحيح: استخدام authOptions بالكامل بدلاً من كائن مخصص
     const session = await getServerSession(authOptions) as Session
     
     if (!session?.user?.id) {
@@ -110,7 +108,7 @@ export async function PUT(
 
     const { id } = await context.params;
     const body = await request.json()
-    const { name, bio, image, banner, location, website } = body
+    const { name, bio, image, banner, location, website, role, banned } = body
 
     // التحقق من أن المستخدم هو نفسه أو مسؤول
     if (session.user.id !== id && session.user.role !== "owner" && session.user.role !== "editor") {
@@ -134,6 +132,12 @@ export async function PUT(
     if (banner !== undefined) updateData.banner = banner;
     if (location) updateData.location = location;
     if (website) updateData.website = website;
+    
+    // فقط المالك يمكنه تغيير الرتبة والحظر
+    if (session.user.role === "owner") {
+      if (role) updateData.role = role;
+      if (banned !== undefined) updateData.banned = banned;
+    }
     
     const result = await db.collection('users').updateOne(
       { _id: new ObjectId(id) },
