@@ -28,7 +28,6 @@ const translations = {
     signIn: "تسجيل دخول",
     signUp: "إنشاء حساب",
     manageAccount: "الملف الشخصي",
-    favorites: "مفضلاتي"
   },
   en: {
     home: "Home",
@@ -50,7 +49,6 @@ const translations = {
     signIn: "Sign In",
     signUp: "Sign Up",
     manageAccount: "Profile",
-    favorites: "My Favorites"
   }
 };
 
@@ -816,20 +814,7 @@ export default function Navbar() {
                             </svg>
                             <span className="text-sm font-medium">{t.manageAccount}</span>
                           </Link>
-                          <Link
-                            href="/favorites"
-                            onClick={() => setProfileOpen(false)}
-                            className={`flex items-center gap-2 px-4 py-3 rounded-lg transition-all duration-300 ${
-                              isActive("/favorites")
-                                ? "bg-indigo-100/50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400" 
-                                : "hover:bg-gray-50/30 dark:hover:bg-gray-700/30"
-                            }`}
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 ${isActive("/favorites") ? "text-indigo-600 dark:text-indigo-400" : "text-red-500"}`} viewBox="0 0 20 20" fill="currentColor">
-                              <path d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" />
-                            </svg>
-                            <span className="text-sm font-medium">{t.favorites}</span>
-                          </Link>
+
                           <div className="border-t border-gray-200/30 dark:border-gray-700/30 my-1"></div>
                           <button
                             onClick={handleSignOut}
@@ -1163,25 +1148,7 @@ export default function Navbar() {
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                       >
-                        <Link
-                          href="/favorites"
-                          onClick={() => setMobileMenuOpen(false)}
-                          className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group ${
-                            isActive("/favorites")
-                              ? "bg-indigo-100/50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400" 
-                              : "hover:bg-gray-50/30 dark:hover:bg-gray-800/30"
-                          }`}
-                        >
-                          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-400/60 to-red-600/60 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-md group-hover:shadow-lg">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" viewBox="0 0 20 20" fill="currentColor">
-                              <path d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" />
-                            </svg>
-                          </div>
-                          <div className="flex-1">
-                            <span className={`text-lg font-medium ${isActive("/favorites") ? "text-indigo-600 dark:text-indigo-400" : "text-gray-900 dark:text-white"}`}>{t.favorites}</span>
-                            <div className={`h-0.5 w-0 bg-gradient-to-r ${isActive("/favorites") ? "from-indigo-400 to-indigo-600" : "from-red-500/50 to-red-700/50"} group-hover:w-full transition-all duration-300`}></div>
-                          </div>
-                        </Link>
+
                       </motion.div>
                       
                       <motion.div
