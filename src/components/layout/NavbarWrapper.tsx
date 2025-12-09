@@ -1,4 +1,3 @@
-// src/components/layout/NavbarWrapper.tsx
 "use client";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import Navbar from "./Navbar";
@@ -7,19 +6,16 @@ import BannedNavbar from "./BannedNavbar";
 export default function NavbarWrapper() {
   const { currentUser, isLoading } = useCurrentUser();
 
-  // أثناء تحميل حالة المستخدم، لا تعرض شيئًا أو يمكنك عرض هيكل عظمي (skeleton)
-  if (isLoading) {
-    return null; 
+  // أثناء تحميل حالة المستخدم، يمكنك عرض هيكل عظمي أو النافبار العادي
+  if (isLoading && currentUser === undefined) {
+    return <Navbar />; // عرض النافبار العادي أثناء التحميل
   }
 
-  // إذا كان المستخدم محظورًا، اعرض النافبار الخاص بالمحظورين
-  if (currentUser?.banned) {
-    // BannedNavbar يحتاج إلى كائن الترجمات (t)
-    // يمكنك تمريره هنا أو جعل المكون يقرأه بنفسه
-    // سنفترض أن المكون يقرأه بنفسه كما في الكود الأصلي
+  // إذا كان المستخدم مسجل دخول ومحظورًا، اعرض النافبار الخاص بالمحظورين
+  if (currentUser && currentUser.banned) {
     return <BannedNavbar />;
   }
 
-  // وإلا، اعرض النافبار العادي
+  // في جميع الحالات الأخرى (مستخدم غير مسجل دخول أو مسجل وغير محظور)، اعرض النافبار العادي
   return <Navbar />;
 }

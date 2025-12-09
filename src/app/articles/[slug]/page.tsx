@@ -7,16 +7,16 @@ import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import { useLanguage } from '@/components/Language/LanguageProvider';
 import FavoriteButton from '@/components/Favorites/FavoriteButton';
-import CommentsClient from '@/components/comments/CommentsClient';
 import ContentRenderer from '@/components/Formats/ContentRenderer';
+import Comments from '@/components/comments/Comments'; // استيراد مكون التعليقات
 import { 
   FaPlay, 
   FaStar, 
   FaFolder, 
   FaVideo,
-  FaComment,
   FaSync,
-  FaHeart
+  FaHeart,
+  FaComment // استيراد أيقونة التعليقات
 } from 'react-icons/fa';
 
 // تعريفات الأنواع - تعديل الواجهات لتتوافق مع MongoDB
@@ -249,12 +249,11 @@ function getLocalizedText(arText?: string, enText?: string, language: 'ar' | 'en
   }
 }
 
-// مكون الأزرار المحسّن
+// مكون الأزرار المحسّن - بدون زر التعليق
 function ActionButtons({ 
   contentId, 
   contentType, 
   title, 
-  onCommentClick,
   isFavorite,
   onToggleFavorite,
   favoritesCount
@@ -262,7 +261,6 @@ function ActionButtons({
   contentId: string; 
   contentType: "episode" | "article"; 
   title: string;
-  onCommentClick: () => void;
   isFavorite: boolean;
   onToggleFavorite: () => void;
   favoritesCount: number;
@@ -296,7 +294,7 @@ function ActionButtons({
         <div className="h-px bg-gradient-to-r from-transparent via-slate-300 dark:via-slate-600 to-transparent flex-grow"></div>
       </div>
       
-      {/* الأزرار مع العناوين */}
+      {/* الأزرار مع العناوين - بدون زر التعليق */}
       <div className="relative flex flex-wrap items-center justify-center gap-6 md:gap-8">
         {/* زر الإعجاب مع العداد */}
         <div className="flex flex-col items-center gap-3">
@@ -338,25 +336,6 @@ function ActionButtons({
           </button>
           <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
             {translations[language].shareArticle}
-          </span>
-        </div>
-        
-        {/* زر التعليق */}
-        <div className="flex flex-col items-center gap-3">
-          <button
-            onClick={onCommentClick}
-            className="group relative flex items-center justify-center w-12 h-12 md:w-14 md:h-14 rounded-full transition-all duration-500 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-500 overflow-hidden"
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-amber-500 to-amber-600 transition-all duration-500"></div>
-            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-            <div className="relative z-10 flex items-center justify-center">
-              <svg className="w-5 h-5 md:w-6 md:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-              </svg>
-            </div>
-          </button>
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            {translations[language].commentArticle}
           </span>
         </div>
       </div>
@@ -508,14 +487,6 @@ export default function ArticleDetailPageClient() {
       setFavoritesCount(prev => Math.max(0, prev - 1));
     }
   }, [isFavorite]);
-  
-  // دالة للتمرير إلى قسم التعليقات
-  const scrollToComments = useCallback(() => {
-    const commentsSection = document.getElementById('comments-section');
-    if (commentsSection) {
-      commentsSection.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, []);
   
   // دالة للحصول على رابط الصورة
   const getImageUrl = useCallback((imageUrl?: string, imageUrlEn?: string): string => {
@@ -810,7 +781,6 @@ export default function ArticleDetailPageClient() {
                   contentId={article._id} 
                   contentType="article" 
                   title={title}
-                  onCommentClick={scrollToComments}
                   isFavorite={isFavorite}
                   onToggleFavorite={handleToggleFavorite}
                   favoritesCount={favoritesCount}
@@ -970,27 +940,31 @@ export default function ArticleDetailPageClient() {
               </div>
             </motion.section>
           )}
-          
+
           {/* قسم التعليقات */}
           <motion.section 
-            id="comments-section"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.5 }}
-            className="bg-white dark:bg-gray-800 rounded-2xl md:rounded-3xl shadow-xl p-4 md:p-6 border border-gray-100 dark:border-gray-700 overflow-hidden"
+            className="bg-white dark:bg-gray-800 rounded-2xl md:rounded-3xl shadow-xl p-4 md:p-6 mb-6 md:mb-8 border border-gray-100 dark:border-gray-700 overflow-hidden"
           >
-            <div className="flex items-center gap-3 mb-4 md:mb-6">
-              <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gradient-to-r from-yellow-500 to-orange-600 flex items-center justify-center text-white shadow-lg">
-                <FaComment className="text-xs md:text-sm" />
+            <div className="mb-4 md:mb-6">
+              <div className="flex items-center gap-3 mb-4 md:mb-6">
+                <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gradient-to-r from-orange-500 to-red-600 flex items-center justify-center text-white shadow-lg">
+                  <FaComment className="text-xs md:text-sm" />
+                </div>
+                <h2 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-orange-600 to-red-700 bg-clip-text text-transparent">
+                  {t.comments}
+                </h2>
+                <div className="flex-grow h-px bg-gradient-to-r from-orange-200 to-transparent"></div>
               </div>
-              <h2 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-yellow-600 to-orange-700 bg-clip-text text-transparent">
-                {t.comments}
-              </h2>
-              <div className="flex-grow h-px bg-gradient-to-r from-yellow-200 to-transparent"></div>
+              
+              <div className="mt-6 md:mt-8">
+                <Comments contentId={article._id} type="article" />
+              </div>
             </div>
-            
-            <CommentsClient contentId={article._id} type="article" />
           </motion.section>
+
         </div>
       </div>
       
