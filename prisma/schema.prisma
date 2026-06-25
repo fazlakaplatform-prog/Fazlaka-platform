@@ -1,0 +1,1059 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// --- Enums ---
+
+enum Role {
+  USER
+  OWNER
+  EDITOR
+  ADMIN
+}
+
+enum OtpPurpose {
+  LOGIN
+  REGISTER
+  RESET
+  VERIFY
+  CHANGE_PASSWORD
+}
+
+enum SectionType {
+  MAIN_TERMS
+  LEGAL_TERM
+  RIGHTS_RESPONSIBILITY
+  ADDITIONAL_POLICY
+  SITE_SETTINGS
+}
+
+enum RightsType {
+  USER_RIGHTS
+  USER_RESPONSIBILITIES
+  COMPANY_RIGHTS
+}
+
+enum HeroSliderMediaType {
+  IMAGE
+  VIDEO
+}
+
+enum PrivacySectionType {
+  MAIN_POLICY
+  USER_RIGHT
+  DATA_TYPE
+  SECURITY_MEASURE
+}
+
+enum TicketCategory {
+  TECHNICAL
+  ACCOUNT
+  BILLING
+  CONTENT
+  OTHER
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  WAITING_FOR_USER
+  RESOLVED
+  CLOSED
+}
+
+enum TicketMessageSender {
+  USER
+  ADMIN
+}
+
+enum NotificationType {
+  INFO
+  SUCCESS
+  WARNING
+  ERROR
+}
+
+enum RelatedType {
+  ARTICLE
+  EPISODE
+  SEASON
+  PLAYLIST
+  TEAM
+  FAQ
+  PRIVACY
+  TERMS
+  GENERAL
+}
+
+enum FriendshipStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  BLOCKED
+}
+
+// --- Authentication & User Models ---
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model User {
+  id                      String            @id @default(cuid())
+  name                    String?
+  email                   String            @unique
+  emailVerified           DateTime?
+  image                   String?
+  password                String?
+  banner                  String?
+  bio                     String?
+  location                String?
+  website                 String?
+  isActive                Boolean           @default(true)
+  role                    Role              @default(USER)
+  banned                  Boolean           @default(false)
+  verificationToken       String?
+  verificationTokenExpiry DateTime?
+  resetToken              String?
+  resetTokenExpiry        DateTime?
+  magicToken              String?
+  magicTokenExpiry        DateTime?
+  otpCode                 String?
+  otpExpiry               DateTime?
+  otpPurpose              OtpPurpose?
+  otpVerified             Boolean?
+  emailChangeCode         String?
+  emailChangeCodeExpiry   DateTime?
+  newEmail                String?
+  googleId                String?
+  lastLogin               DateTime?
+  createdAt               DateTime          @default(now())
+  updatedAt               DateTime          @updatedAt
+
+  secondaryEmails         SecondaryEmail[]
+  accounts                Account[]
+  sessions                Session[]
+  notifications           Notification[]
+  contacts                Contact[]
+  tickets                 Ticket[]
+  favorites               Favorite[]
+  comments                Comment[]
+  commentLikes            CommentLike[]
+  commentDislikes         CommentDislike[]
+  commentReports          CommentReport[]
+  chatHistories           ChatHistory[]
+  userActivities          UserActivity[]
+  loginHistories          LoginHistory[]
+  verificationAttempts    VerificationAttempt[]
+  passwordResetAttempts   PasswordResetAttempt[]
+  emailChangeHistories    EmailChangeHistory[]
+  playlists               Playlist[]
+  
+  // --- علاقات الصداقة والمحادثة ---
+  sentFriendRequests     Friendship[]      @relation("FriendRequestSender")
+  receivedFriendRequests Friendship[]      @relation("FriendRequestReceiver")
+  conversations          ConversationParticipant[]
+  messages               Message[]
+
+  @@map("users")
+}
+
+model SecondaryEmail {
+  id                        String            @id @default(cuid())
+  email                     String
+  isVerified                Boolean           @default(false)
+  verificationCode          String?
+  verificationCodeExpiry    DateTime?
+  verificationToken         String?
+  verificationTokenExpiry   DateTime?
+  createdAt                 DateTime          @default(now())
+
+  userId                    String
+  user                      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([email])
+  @@map("secondary_emails")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+model MagicLink {
+  id                String   @id @default(cuid())
+  email             String
+  name              String?
+  magicToken        String   @unique
+  magicTokenExpiry  DateTime
+  purpose           String
+  createdAt         DateTime @default(now())
+
+  @@map("magic_links")
+}
+
+model OTP {
+  id         String   @id @default(cuid())
+  email      String
+  otpCode    String
+  otpExpiry  DateTime
+  purpose    String
+  name       String?
+  createdAt  DateTime @default(now())
+
+  @@map("otps")
+}
+
+// --- Notification Model ---
+
+model Notification {
+  id          String           @id @default(cuid())
+  userId      String
+  title       String
+  titleEn     String?          @map("title_en")
+  message     String
+  messageEn   String?          @map("message_en")
+  type        NotificationType @default(INFO)
+  isRead      Boolean          @default(false) @map("is_read")
+  relatedId   String?          @map("related_id")
+  relatedType RelatedType?     @map("related_type")
+  actionUrl   String?          @map("action_url")
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @updatedAt @map("updated_at")
+
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt(sort: Desc)])
+  @@map("notifications")
+}
+
+model LoginHistory {
+  id        String   @id @default(cuid())
+  userId    String
+  ip        String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("login_history")
+}
+
+model VerificationAttempt {
+  id        String   @id @default(cuid())
+  userId    String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("verification_attempts")
+}
+
+model PasswordResetAttempt {
+  id        String   @id @default(cuid())
+  userId    String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("password_reset_attempts")
+}
+
+model EmailChangeHistory {
+  id        String   @id @default(cuid())
+  userId    String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("email_change_history")
+}
+
+model UserActivity {
+  id        String   @id @default(cuid())
+  userId    String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_activities")
+}
+
+// --- Chat History Model (AI Chat) ---
+
+model ChatHistory {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  messages  Json
+  shareId   String?  @unique
+  isPublic  Boolean  @default(false)
+  sharedAt  DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("chat_histories")
+}
+
+// --- Contact Models ---
+
+model Contact {
+  id            String             @id @default(cuid())
+  name          String
+  email         String
+  message       String             @db.Text
+  userId        String
+  userFirstName String             @map("user_first_name")
+  userLastName  String?            @map("user_last_name")
+  userImageUrl  String?            @map("user_image_url")
+  createdAt     DateTime           @default(now()) @map("created_at")
+
+  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  attachments  ContactAttachment[]
+
+  @@index([userId])
+  @@index([email])
+  @@index([createdAt(sort: Desc)])
+  @@map("contacts")
+}
+
+model ContactAttachment {
+  id        String  @id @default(cuid())
+  name      String
+  size      Int
+  type      String
+  url       String?
+  isImage   Boolean @default(false)
+  error     String?
+
+  contactId String  @map("contact_id")
+  contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@map("contact_attachments")
+}
+
+// --- Ticket Models ---
+
+model Ticket {
+  id             String        @id @default(cuid())
+  ticketNumber   String        @unique @map("ticket_number")
+  userId         String
+  userName       String        @map("user_name")
+  userEmail      String        @map("user_email")
+  userImageUrl   String?       @map("user_image_url")
+  category       TicketCategory
+  priority       TicketPriority @default(MEDIUM)
+  status         TicketStatus   @default(OPEN)
+  subject        String
+  subjectEn      String?       @map("subject_en")
+  description    String        @db.Text
+  descriptionEn  String?       @map("description_en") @db.Text
+  assignedTo     String?       @map("assigned_to")
+  resolution     String?       @db.Text
+  resolutionEn   String?       @map("resolution_en") @db.Text
+  resolvedAt     DateTime?     @map("resolved_at")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages       TicketMessage[]
+  attachments    TicketAttachment[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([category])
+  @@index([createdAt(sort: Desc)])
+  @@map("tickets")
+}
+
+model TicketMessage {
+  id           String                  @id @default(cuid())
+  content      String                  @db.Text
+  contentEn    String?                 @map("content_en") @db.Text
+  sender       TicketMessageSender
+  createdAt    DateTime                @default(now()) @map("created_at")
+
+  senderName   String?                 @map("sender_name")
+  senderImage  String?                 @map("sender_image")
+
+  ticketId     String                  @map("ticket_id")
+  ticket       Ticket                  @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  attachments  TicketMessageAttachment[]
+
+  @@index([ticketId])
+  @@map("ticket_messages")
+}
+
+model TicketAttachment {
+  id        String  @id @default(cuid())
+  name      String
+  size      Int
+  type      String
+  url       String?
+  isImage   Boolean @default(false)
+
+  ticketId  String  @map("ticket_id")
+  ticket    Ticket  @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@map("ticket_attachments")
+}
+
+model TicketMessageAttachment {
+  id        String        @id @default(cuid())
+  name      String
+  size      Int
+  type      String
+  url       String?
+  isImage   Boolean @default(false)
+
+  messageId String        @map("message_id")
+  message   TicketMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@map("ticket_message_attachments")
+}
+
+// --- Terms & Conditions Models ---
+
+model Terms {
+  id                      String        @id @default(cuid())
+  sectionType             SectionType
+  title                   String?
+  titleEn                 String?       @map("title_en")
+  content                 Json?
+  contentEn               Json?         @map("content_en")
+  term                    String?
+  termEn                  String?       @map("term_en")
+  definition              String?       @db.Text
+  definitionEn            String?       @map("definition_en") @db.Text
+  icon                    String?
+  rightsType              RightsType?
+  color                   String?
+  borderColor             String?       @map("border_color")
+  description             String?       @db.Text
+  descriptionEn           String?       @map("description_en") @db.Text
+  linkText                String?       @map("link_text")
+  linkTextEn              String?       @map("link_text_en")
+  linkUrl                 String?       @map("link_url")
+  siteTitle               String?       @map("site_title")
+  siteTitleEn             String?       @map("site_title_en")
+  siteDescription         String?       @map("site_description") @db.Text
+  siteDescriptionEn       String?       @map("site_description_en") @db.Text
+  logo                    Json?
+  logoEn                  Json?         @map("logo_en")
+  footerText              String?       @map("footer_text") @db.Text
+  footerTextEn            String?       @map("footer_text_en") @db.Text
+  lastUpdated             DateTime?     @map("last_updated")
+  createdAt               DateTime      @default(now()) @map("created_at")
+  updatedAt               DateTime      @updatedAt @map("updated_at")
+
+  items                   TermsItem[]
+
+  @@map("terms")
+}
+
+model TermsItem {
+  id      String @id @default(cuid())
+  item    String @db.Text
+  itemEn  String? @map("item_en") @db.Text
+
+  termsId String
+  terms   Terms  @relation(fields: [termsId], references: [id], onDelete: Cascade)
+
+  @@map("terms_items")
+}
+
+// --- Team Model ---
+
+model Team {
+  id          String        @id @default(cuid())
+  name        String
+  nameEn      String        @map("name_en")
+  role        String?
+  roleEn      String?       @map("role_en")
+  bio         String?       @db.Text
+  bioEn       String?       @map("bio_en") @db.Text
+  imageUrl    String?       @map("image_url")
+  imageUrlEn  String?       @map("image_url_en")
+  slug        String        @unique
+  socialMedia Json?         @map("social_media")
+  socialLinks SocialLink[]
+  order       Int           @default(0)
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  @@map("teams")
+}
+
+// --- Social Link Model ---
+
+model SocialLink {
+  id        String   @id @default(cuid())
+  platform  String
+  url       String
+  isActive  Boolean  @default(true)
+  order     Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  teamId    String?
+  team      Team?    @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@map("social_links")
+}
+
+// --- Hero Slider Model ---
+
+model HeroSlider {
+  id            String              @id @default(cuid())
+  title         String
+  titleEn       String              @map("title_en")
+  description   String              @db.Text
+  descriptionEn String              @map("description_en") @db.Text
+  mediaType     HeroSliderMediaType @default(IMAGE)
+  image         String?
+  imageEn       String?             @map("image_en")
+  videoUrl      String?             @map("video_url")
+  videoUrlEn    String?             @map("video_url_en")
+
+  linkText      String?             @map("link_text")
+  linkTextEn    String?             @map("link_text_en")
+  linkUrl       String?             @map("link_url")
+
+  orderRank     Int                 @default(0) @map("order_rank")
+  createdAt     DateTime            @default(now()) @map("created_at")
+  updatedAt     DateTime            @updatedAt @map("updated_at")
+
+  @@map("hero_sliders")
+}
+
+// --- FAQ Model ---
+
+model FAQ {
+  id          String   @id @default(cuid())
+  question    String
+  questionEn  String?  @map("question_en")
+  answer      String   @db.Text
+  answerEn    String?  @map("answer_en") @db.Text
+  category    String
+  categoryEn  String?  @map("category_en")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("faqs")
+}
+
+// --- Privacy Policy Model ---
+
+model Privacy {
+  id            String           @id @default(cuid())
+  sectionType   PrivacySectionType
+  title         String?
+  titleEn       String?          @map("title_en")
+  content       Json?
+  contentEn     Json?            @map("content_en")
+  description   String?          @db.Text
+  descriptionEn String?          @map("description_en") @db.Text
+  icon          String?
+  color         String?
+  textColor     String?          @map("text_color")
+  lastUpdated   DateTime?        @map("last_updated")
+  createdAt     DateTime         @default(now()) @map("created_at")
+  updatedAt     DateTime         @updatedAt @map("updated_at")
+
+  @@map("privacy")
+}
+
+// --- Content Models ---
+
+model Season {
+  id              String     @id @default(cuid())
+  title           String
+  titleEn         String     @map("title_en")
+  slug            String     @unique
+  description     String?    @db.Text
+  descriptionEn   String?    @map("description_en") @db.Text
+  thumbnailUrl    String?    @map("thumbnail_url")
+  thumbnailUrlEn  String?    @map("thumbnail_url_en")
+  publishedAt     DateTime?  @map("published_at")
+  createdAt       DateTime   @default(now()) @map("created_at")
+  updatedAt       DateTime   @updatedAt @map("updated_at")
+
+  episodes        Episode[]
+  articles        Article[]
+
+  @@index([slug])
+  @@map("seasons")
+}
+
+model Episode {
+  id              String     @id @default(cuid())
+  title           String
+  titleEn         String     @map("title_en")
+  slug            String     @unique
+  description     String?    @db.Text
+  descriptionEn   String?    @map("description_en") @db.Text
+  content         Json?
+  contentEn       Json?      @map("content_en")
+  videoUrl        String?    @map("video_url")
+  videoUrlEn      String?    @map("video_url_en")
+  thumbnailUrl    String?    @map("thumbnail_url")
+  thumbnailUrlEn  String?    @map("thumbnail_url_en")
+  publishedAt     DateTime?  @map("published_at")
+  createdAt       DateTime   @default(now()) @map("created_at")
+  updatedAt       DateTime   @updatedAt @map("updated_at")
+
+  seasonId        String?    @map("season_id")
+  season          Season?    @relation(fields: [seasonId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  
+  articles        Article[]
+  playlists       Playlist[] @relation("EpisodeToPlaylist")
+  favorites       Favorite[]
+  comments        Comment[]
+
+  @@index([slug])
+  @@index([seasonId])
+  @@map("episodes")
+}
+
+model Article {
+  id                String     @id @default(cuid())
+  title             String
+  titleEn           String     @map("title_en")
+  slug              String     @unique
+  excerpt           String?    @db.Text
+  excerptEn         String?    @map("excerpt_en") @db.Text
+  content           Json?
+  contentEn         Json?      @map("content_en")
+  featuredImageUrl  String?    @map("featured_image_url")
+  featuredImageUrlEn String?   @map("featured_image_url_en")
+  publishedAt       DateTime?  @map("published_at")
+  createdAt         DateTime   @default(now()) @map("created_at")
+  updatedAt         DateTime   @updatedAt @map("updated_at")
+
+  seasonId          String?    @map("season_id")
+  season            Season?    @relation(fields: [seasonId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  
+  episodeId         String?    @map("episode_id")
+  episode           Episode?   @relation(fields: [episodeId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  playlists         Playlist[] @relation("ArticleToPlaylist")
+  favorites         Favorite[]
+  comments          Comment[]
+
+  @@index([slug])
+  @@index([seasonId])
+  @@index([episodeId])
+  @@map("articles")
+}
+
+model Playlist {
+  id              String     @id @default(cuid())
+  title           String
+  titleEn         String     @map("title_en")
+  slug            String     @unique
+  description     String?    @db.Text
+  descriptionEn   String?    @map("description_en") @db.Text
+  imageUrl        String?    @map("image_url")
+  imageUrlEn      String?    @map("image_url_en")
+  
+  userId          String?    @map("user_id")
+  isPublic        Boolean    @default(false)
+  
+  createdAt       DateTime   @default(now()) @map("created_at")
+  updatedAt       DateTime   @updatedAt @map("updated_at")
+
+  user            User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  episodes        Episode[]  @relation("EpisodeToPlaylist")
+  articles        Article[]  @relation("ArticleToPlaylist")
+
+  @@index([slug])
+  @@index([userId])
+  @@map("playlists")
+}
+
+// --- Favorite Model ---
+
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String
+  episodeId String?
+  articleId String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  episode Episode? @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  article Article? @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, episodeId])
+  @@unique([userId, articleId])
+  @@map("favorites")
+}
+
+// --- Comment Model ---
+
+model Comment {
+  id            String    @id @default(cuid())
+  content       String    @db.Text
+  userId        String?
+  email         String?
+  name          String?
+  userFirstName String?
+  userLastName  String?
+  userImageUrl  String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  isEdited      Boolean   @default(false)
+
+  episodeId     String?
+  episode       Episode?  @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  
+  articleId     String?
+  article       Article?  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  
+  parentId      String?   @map("parent_id")
+  parent        Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies       Comment[] @relation("CommentReplies")
+  
+  userRelation  User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  likes         CommentLike[]
+  dislikes      CommentDislike[]
+  reports       CommentReport[]
+
+  @@index([episodeId])
+  @@index([articleId])
+  @@index([parentId])
+  @@map("comments")
+}
+
+model CommentLike {
+  id        String   @id @default(cuid())
+  userId    String
+  commentId String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comment   Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, commentId])
+  @@map("comment_likes")
+}
+
+model CommentDislike {
+  id        String   @id @default(cuid())
+  userId    String
+  commentId String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comment   Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, commentId])
+  @@map("comment_dislikes")
+}
+
+model CommentReport {
+  id        String   @id @default(cuid())
+  userId    String
+  commentId String
+  reason    String   @db.Text
+  status    String   @default("PENDING")
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comment   Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@map("comment_reports")
+}
+
+// --- Friendship & Chat Models ---
+
+model Friendship {
+  id          String            @id @default(cuid())
+  requesterId String
+  receiverId  String
+  status      FriendshipStatus  @default(PENDING)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  requester   User              @relation("FriendRequestSender", fields: [requesterId], references: [id], onDelete: Cascade)
+  receiver    User              @relation("FriendRequestReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@unique([requesterId, receiverId])
+  @@map("friendships")
+}
+
+model Conversation {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  participants ConversationParticipant[]
+  messages     Message[]
+
+  @@map("conversations")
+}
+
+model ConversationParticipant {
+  id             String   @id @default(cuid())
+  conversationId String
+  userId         String
+  joinedAt       DateTime @default(now())
+
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, userId])
+  @@map("conversation_participants")
+}
+
+model Message {
+  id             String   @id @default(cuid())
+  conversationId String
+  senderId       String
+  content        String?  @db.Text  // جعل المحتوى اختياري في حالة إرسال صورة فقط
+  imageUrl       String?  @map("image_url") // حقل رابط الصورة
+  isEdited       Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  isRead         Boolean  @default(false)
+
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@index([senderId])
+  @@map("messages")
+}
+
+// ===================================================================
+// 📧 النشرة البريدية (Newsletter)
+// ===================================================================
+
+enum NewsletterStatus {
+  ACTIVE
+  UNSUBSCRIBED
+  BOUNCED
+  SPAM
+}
+
+enum CampaignStatus {
+  DRAFT
+  SCHEDULED
+  SENDING
+  SENT
+  PAUSED
+  FAILED
+}
+
+enum SubscriberSource {
+  WEBSITE
+  ADMIN
+  IMPORT
+  API
+}
+
+model NewsletterSubscriber {
+  id             String            @id @default(cuid())
+  email          String            @unique
+  name           String?
+  status         NewsletterStatus  @default(ACTIVE)
+  source         SubscriberSource  @default(WEBSITE)
+  language       String            @default("ar")
+  
+  // تفضيلات البريد الإلكتروني
+  tags           Json?             @default("[]")
+  metadata       Json?             @default("{}")
+  
+  // تتبع
+  subscribedAt   DateTime          @default(now()) @map("subscribed_at")
+  unsubscribedAt DateTime?         @map("unsubscribed_at")
+  lastOpenedAt   DateTime?         @map("last_opened_at")
+  lastClickedAt  DateTime?         @map("last_clicked_at")
+  openCount      Int               @default(0) @map("open_count")
+  clickCount     Int               @default(0) @map("click_count")
+  
+  createdAt      DateTime          @default(now()) @map("created_at")
+  updatedAt      DateTime          @updatedAt @map("updated_at")
+
+  campaigns      NewsletterCampaignSubscriber[]
+
+  @@index([status])
+  @@index([email])
+  @@index([subscribedAt(sort: Desc)])
+  @@map("newsletter_subscribers")
+}
+
+model NewsletterCampaign {
+  id              String           @id @default(cuid())
+  subject         String
+  subjectEn       String?          @map("subject_en")
+  previewText     String?          @map("preview_text")
+  previewTextEn   String?          @map("preview_text_en")
+  content         Json             @default("[]")
+  contentEn       Json?            @map("content_en")
+  status          CampaignStatus   @default(DRAFT)
+  
+  // التقسيم (Segmentation)
+  targetTags      Json?            @default("[]") @map("target_tags")
+  targetLanguages String?          @map("target_languages")
+  
+  // الجدولة
+  scheduledAt     DateTime?        @map("scheduled_at")
+  sentAt          DateTime?        @map("sent_at")
+  
+  // الإحصائيات
+  totalRecipients Int              @default(0) @map("total_recipients")
+  sentCount       Int              @default(0) @map("sent_count")
+  failedCount     Int              @default(0) @map("failed_count")
+  openCount       Int              @default(0) @map("open_count")
+  clickCount      Int              @default(0) @map("click_count")
+  unsubscribeCount Int             @default(0) @map("unsubscribe_count")
+  
+  // المحتوى المرفق (اختياري)
+  attachmentUrl   String?          @map("attachment_url")
+  
+  createdBy       String?          @map("created_by")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+
+  subscribers     NewsletterCampaignSubscriber[]
+
+  @@index([status])
+  @@index([scheduledAt])
+  @@index([createdAt(sort: Desc)])
+  @@map("newsletter_campaigns")
+}
+
+model NewsletterCampaignSubscriber {
+  id            String              @id @default(cuid())
+  campaignId    String              @map("campaign_id")
+  subscriberId  String              @map("subscriber_id")
+  sentAt        DateTime?           @map("sent_at")
+  openedAt      DateTime?           @map("opened_at")
+  clickedAt     DateTime?           @map("clicked_at")
+  clickCount    Int                 @default(0) @map("click_count")
+  failed        Boolean             @default(false)
+  failReason    String?             @map("fail_reason")
+  unsubscribed  Boolean             @default(false)
+
+  campaign      NewsletterCampaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  subscriber    NewsletterSubscriber @relation(fields: [subscriberId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, subscriberId])
+  @@index([campaignId])
+  @@index([subscriberId])
+  @@map("newsletter_campaign_subscribers")
+}
+
+model NewsletterUnsubscribeToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([email])
+  @@index([token])
+  @@map("newsletter_unsubscribe_tokens")
+}
+
+// --- Content View Model ---
+
+model ContentView {
+  id        String   @id @default(cuid())
+  userId    String?  @map("user_id")
+  contentId String   @map("content_id")
+  contentType String @map("content_type") // "EPISODE" or "ARTICLE"
+  slug      String?
+  title     String?
+  count     Int      @default(1)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([contentId, contentType, userId])
+  @@index([contentType, count(sort: Desc)])
+  @@index([createdAt(sort: Desc)])
+  @@map("content_views")
+}
+
+// --- Automation Sequence Models ---
+
+model AutomationSequence {
+  id          String   @id @default(cuid())
+  name        String
+  nameEn      String?
+  trigger     String   @default("SUBSCRIBE") // SUBSCRIBE, TAG_ADDED, INACTIVE
+  status      String   @default("ACTIVE") // ACTIVE, PAUSED
+  delayHours  Int      @default(0)
+  subject     String
+  subjectEn   String?
+  content     Json     @default("[]")
+  contentEn   Json?
+  tags        Json?    @default("[]")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("automation_sequences")
+}
+
+model AutomationLog {
+  id          String   @id @default(cuid())
+  sequenceId  String   @map("sequence_id")
+  subscriberId String  @map("subscriber_id")
+  email       String
+  sentAt      DateTime? @map("sent_at")
+  openedAt    DateTime? @map("opened_at")
+  error       String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([sequenceId])
+  @@index([subscriberId])
+  @@map("automation_logs")
+}

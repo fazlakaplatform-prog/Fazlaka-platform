@@ -1,0 +1,366 @@
+/* Wrapper */
+.staggered-menu-wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 0;
+  z-index: 50;
+  pointer-events: none;
+}
+
+.staggered-menu-wrapper[data-open='true'] {
+  height: 100vh;
+  pointer-events: auto;
+}
+
+/* Blur Overlay */
+.blur-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  opacity: 0;
+  visibility: hidden;
+  z-index: 51;
+  transition: opacity 0.3s ease;
+}
+
+/* --- الزر الجديد --- */
+.staggered-menu-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 60;
+  pointer-events: none;
+}
+
+.sm-toggle-btn {
+  position: absolute;
+  top: 50%; 
+  width: 56px;
+  height: 56px;
+  
+  /* Styling: Blue Transparent */
+  background: rgba(37, 99, 235, 0.25);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+  
+  border-radius: 16px;
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+  
+  cursor: pointer;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0 16px;
+  transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+  z-index: 65;
+  overflow: hidden;
+}
+
+/* Positioning Logic - الوضع المغلق */
+[data-position='right'] .sm-toggle-btn {
+  right: -10px;
+  transform: translateY(-50%);
+}
+[data-position='left'] .sm-toggle-btn {
+  left: -10px;
+  transform: translateY(-50%);
+}
+
+/* --- حالة الفتح (مُصححة للاتجاهات) --- */
+.staggered-menu-wrapper[data-open='true'] .sm-toggle-btn {
+  /* الانتقال للأعلى */
+  top: 2rem !important; 
+  transform: translateY(0) !important;
+  
+  width: auto;
+  min-width: 56px;
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255,255,255,0.1);
+  color: var(--sm-accent, #6366f1);
+  box-shadow: none;
+}
+
+.dark .staggered-menu-wrapper[data-open='true'] .sm-toggle-btn {
+    background: rgba(255,255,255,0.05);
+    color: #fff;
+}
+
+/* تحديد موقع الزر عند الفتح بناءً على اتجاه القائمة */
+/* إذا كانت القائمة يمين (RTL)، الزر يبقى يمين */
+[data-position='right'].staggered-menu-wrapper[data-open='true'] .sm-toggle-btn {
+  right: 2rem !important;
+  left: auto !important;
+}
+
+/* إذا كانت القائمة يسار (LTR)، الزر يذهب يسار */
+[data-position='left'].staggered-menu-wrapper[data-open='true'] .sm-toggle-btn {
+  left: 2rem !important;
+  right: auto !important;
+}
+
+/* محتوى الزر */
+.sm-btn-content {
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.sm-btn-text {
+    white-space: nowrap;
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-inline-start: 10px; /* يستجيب للاتجاه تلقائياً */
+    pointer-events: none;
+}
+
+/* --- أيقونة الهامبرغر --- */
+.sm-icon-wrap {
+  position: relative;
+  width: 20px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.sm-line {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: currentColor;
+  border-radius: 2px;
+  transform-origin: center;
+}
+
+.sm-line:nth-child(1) { top: 0; }
+.sm-line:nth-child(2) { top: 7px; }
+.sm-line:nth-child(3) { bottom: 0; }
+
+
+/* --- اللوحة الجانبية --- */
+.staggered-menu-panel {
+  position: fixed;
+  top: 0;
+  height: 100vh;
+  width: 320px;
+  max-width: 85vw;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  z-index: 55;
+  box-shadow: -10px 0 30px rgba(0,0,0,0.05);
+  border-left: 1px solid rgba(255,255,255,0.5);
+}
+
+.dark .staggered-menu-panel {
+    background: rgba(17, 24, 39, 0.95);
+    border-left: 1px solid rgba(255,255,255,0.05);
+}
+
+[data-position='right'] .staggered-menu-panel { right: 0; left: auto; }
+[data-position='left'] .staggered-menu-panel { left: 0; right: auto; }
+
+/* --- Inner Content Padding & Scrollbar--- */
+.sm-panel-inner {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 6rem 2rem 2rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* تحسين شكل الاسكرول بار */
+.sm-panel-inner::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sm-panel-inner::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sm-panel-inner::-webkit-scrollbar-thumb {
+  background-color: rgba(99, 102, 241, 0.2);
+  border-radius: 20px;
+}
+
+.sm-panel-inner::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(99, 102, 241, 0.4);
+}
+
+/* --- قسم المستخدم --- */
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: rgba(99, 102, 241, 0.05);
+    border-radius: 16px;
+    margin-bottom: 2rem;
+    border: 1px solid rgba(99, 102, 241, 0.1);
+}
+
+.user-avatar-wrapper {
+    position: relative;
+}
+
+.user-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid white;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.user-name {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #111;
+    line-height: 1.2;
+}
+
+.dark .user-name { color: #fff; }
+
+.user-role {
+    font-size: 0.75rem;
+    color: var(--sm-accent, #6366f1);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+/* --- Header Content --- */
+.sm-header-content {
+  margin-bottom: 1.5rem;
+}
+
+.sm-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  /* تم تغيير اللون إلى الأزرق */
+  color: #2563eb; 
+  margin: 0;
+  line-height: 1;
+}
+
+.dark .sm-title {
+    color: #60a5fa; /* أزرق فاتح للوضع الداكن */
+}
+
+/* List Styling */
+.sm-panel-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.25rem; }
+.sm-panel-itemWrap { position: relative; }
+
+.sm-panel-link {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.sm-panel-link::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(99, 102, 241, 0.08);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s ease;
+  border-radius: 10px;
+  z-index: 0;
+}
+
+[data-position='right'] .sm-panel-link::before {
+  transform-origin: right;
+}
+
+.sm-panel-link:hover::before { transform: scaleX(1); }
+
+.sm-item-number {
+  font-family: monospace;
+  font-size: 0.8rem;
+  color: var(--sm-accent, #6366f1);
+  margin-inline-end: 1rem;
+  opacity: 0.5;
+  z-index: 1;
+}
+
+.sm-item-text {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #374151;
+  position: relative;
+  z-index: 1;
+}
+
+.dark .sm-item-text { color: #e5e7eb; }
+
+.sm-active-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--sm-accent, #6366f1);
+  border-radius: 50%;
+  margin-inline-start: auto;
+  position: relative;
+  z-index: 1;
+}
+
+.sm-footer {
+  margin-top: auto;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(0,0,0,0.05);
+}
+
+.dark .sm-footer {
+    border-top-color: rgba(255,255,255,0.05);
+}
+
+/* Pre-layers */
+.sm-prelayers {
+  position: fixed;
+  top: 0;
+  height: 100vh;
+  width: 320px;
+  max-width: 85vw;
+  pointer-events: none;
+  z-index: 52;
+}
+[data-position='right'] .sm-prelayers { right: 0; left: auto; }
+[data-position='left'] .sm-prelayers { left: 0; right: auto; }
+.sm-prelayer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: 100%;
+  opacity: 0.5;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .staggered-menu-panel, .sm-prelayers { width: 85%; }
+  .sm-toggle-btn { width: 48px; height: 48px; }
+}
