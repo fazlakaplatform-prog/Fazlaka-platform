@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getUserIdFromRequest } from '@/lib/auth-helper';
 import { toggleCommentDislike } from '@/services/comments';
 import { pusherServer } from '@/lib/pusher';
 import { prisma } from '@/lib/prisma';
@@ -11,8 +10,8 @@ export async function POST(
 ) {
   try {
     // 1. التحقق من تسجيل الدخول
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    const userId = await getUserIdFromRequest(request);
+    if (!userId) {
       return NextResponse.json({ error: 'Login required' }, { status: 401 });
     }
 
@@ -29,7 +28,7 @@ export async function POST(
     }
 
     // 3. تنفيذ عملية عدم الإعجاب (تبديلية)
-    const result = await toggleCommentDislike(id, session.user.id);
+    const result = await toggleCommentDislike(id, userId);
     
     // 4. بث التحديث الفوري عبر Pusher
     const contentId = comment.articleId || comment.episodeId;
