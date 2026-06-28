@@ -288,7 +288,7 @@ export default function AddArticlePage() {
                 <input type="text" required value={title} onChange={(e) => setTitle(e.target.value)} className="w-full p-3 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white" dir="rtl" />
               </div>
               <div className="mb-4">
-                <label className="block text-sm font-medium mb-2">Excerpt (Arabic)</label>
+                <label className="block text-sm font-medium mb-2">Excerpt (Arabic) <span className="text-gray-400 text-xs">(website - HTML)</span></label>
                 <SimpleTextEditor content={excerpt} onChange={setExcerpt} language="ar" />
               </div>
               <div className="mb-4">
@@ -325,7 +325,7 @@ export default function AddArticlePage() {
                 <input type="text" required value={titleEn} onChange={(e) => setTitleEn(e.target.value)} className="w-full p-3 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
               </div>
               <div className="mb-4">
-                <label className="block text-sm font-medium mb-2">Excerpt (English)</label>
+                <label className="block text-sm font-medium mb-2">Excerpt (English) <span className="text-gray-400 text-xs">(website - HTML)</span></label>
                 <SimpleTextEditor content={excerptEn} onChange={setExcerptEn} language="en" />
               </div>
               <div className="mb-4">
