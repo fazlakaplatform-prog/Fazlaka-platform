@@ -10,11 +10,6 @@ function generateSlug(title: string): string {
     .replace(/(^-|-$)/g, '');
 }
 
-interface EpisodeWithMobile extends Episode {
-  contentMobile?: string | null;
-  contentMobileEn?: string | null;
-}
-
 interface PopulatedEpisode extends Episode {
   season: Season | null;
   articles: Article[];
@@ -38,7 +33,7 @@ function mapEpisode(episode: PopulatedEpisode, language: string): EpisodeWithLoc
     localizedDescription: language === 'ar' ? episode.description : episode.descriptionEn,
     localizedDescriptionMobile: language === 'ar' ? episode.descriptionMobile : episode.descriptionMobileEn,
     localizedContent: (language === 'ar' ? episode.content : episode.contentEn) as PortableTextBlock[] | null,
-    localizedContentMobile: language === 'ar' ? (episode as EpisodeWithMobile).contentMobile : (episode as EpisodeWithMobile).contentMobileEn,
+    localizedContentMobile: language === 'ar' ? episode.contentMobile : episode.contentMobileEn,
     localizedVideoUrl: language === 'ar' ? episode.videoUrl : episode.videoUrlEn,
     localizedThumbnailUrl: language === 'ar' ? episode.thumbnailUrl : episode.thumbnailUrlEn
   };
@@ -102,7 +97,7 @@ export async function fetchEpisodesBySeason(seasonId: string, language: string =
   }
 }
 
-export async function createEpisode(episodeData: Partial<EpisodeWithMobile> & { articles?: string[] }): Promise<Episode | null> {
+export async function createEpisode(episodeData: Partial<Episode> & { articles?: string[] }): Promise<Episode | null> {
   try {
     const slug = episodeData.slug || generateSlug(episodeData.titleEn || episodeData.title || '');
 
@@ -160,7 +155,7 @@ export async function createEpisode(episodeData: Partial<EpisodeWithMobile> & { 
   }
 }
 
-export async function updateEpisode(idOrSlug: string, episodeData: Partial<EpisodeWithMobile> & { articles?: string[] }): Promise<Episode | null> {
+export async function updateEpisode(idOrSlug: string, episodeData: Partial<Episode> & { articles?: string[] }): Promise<Episode | null> {
   try {
     const episode = await prisma.episode.findFirst({
       where: { OR: [{ id: idOrSlug }, { slug: idOrSlug }] }
