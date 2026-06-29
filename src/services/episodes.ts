@@ -125,17 +125,17 @@ export async function createEpisode(episodeData: Partial<Episode> & { articles?:
     if (episodeData.content !== undefined) {
       const raw = episodeData.content;
       if (typeof raw === 'string' && (raw.trimStart().startsWith('{') || raw.trimStart().startsWith('['))) {
-        try { data.content = JSON.parse(raw); } catch { data.content = raw; }
+        try { data.content = JSON.parse(raw); } catch { data.content = raw || Prisma.JsonNull; }
       } else {
-        data.content = raw ?? Prisma.JsonNull;
+        data.content = raw || Prisma.JsonNull;
       }
     }
     if (episodeData.contentEn !== undefined) {
       const raw = episodeData.contentEn;
       if (typeof raw === 'string' && (raw.trimStart().startsWith('{') || raw.trimStart().startsWith('['))) {
-        try { data.contentEn = JSON.parse(raw); } catch { data.contentEn = raw; }
+        try { data.contentEn = JSON.parse(raw); } catch { data.contentEn = raw || Prisma.JsonNull; }
       } else {
-        data.contentEn = raw ?? Prisma.JsonNull;
+        data.contentEn = raw || Prisma.JsonNull;
       }
     }
 
@@ -191,17 +191,17 @@ export async function updateEpisode(idOrSlug: string, episodeData: Partial<Episo
     if (episodeData.content !== undefined) {
       const raw = episodeData.content;
       if (typeof raw === 'string' && (raw.trimStart().startsWith('{') || raw.trimStart().startsWith('['))) {
-        try { data.content = JSON.parse(raw); } catch { data.content = raw; }
+        try { data.content = JSON.parse(raw); } catch { data.content = raw || Prisma.JsonNull; }
       } else {
-        data.content = raw ?? Prisma.JsonNull;
+        data.content = raw || Prisma.JsonNull;
       }
     }
     if (episodeData.contentEn !== undefined) {
       const raw = episodeData.contentEn;
       if (typeof raw === 'string' && (raw.trimStart().startsWith('{') || raw.trimStart().startsWith('['))) {
-        try { data.contentEn = JSON.parse(raw); } catch { data.contentEn = raw; }
+        try { data.contentEn = JSON.parse(raw); } catch { data.contentEn = raw || Prisma.JsonNull; }
       } else {
-        data.contentEn = raw ?? Prisma.JsonNull;
+        data.contentEn = raw || Prisma.JsonNull;
       }
     }
 

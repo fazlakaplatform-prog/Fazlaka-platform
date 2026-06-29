@@ -171,16 +171,22 @@ export async function createArticle(articleData: Partial<Article>): Promise<Arti
 
     // Handle JSON content fields
     if (articleData.content) {
-      data.content = typeof articleData.content === 'string'
-        ? JSON.parse(articleData.content as string)
-        : articleData.content;
+      const raw = articleData.content;
+      if (typeof raw === 'string' && (raw.trimStart().startsWith('{') || raw.trimStart().startsWith('['))) {
+        try { data.content = JSON.parse(raw); } catch { data.content = raw; }
+      } else {
+        data.content = raw;
+      }
     } else {
       data.content = Prisma.JsonNull;
     }
     if (articleData.contentEn) {
-      data.contentEn = typeof articleData.contentEn === 'string'
-        ? JSON.parse(articleData.contentEn as string)
-        : articleData.contentEn;
+      const raw = articleData.contentEn;
+      if (typeof raw === 'string' && (raw.trimStart().startsWith('{') || raw.trimStart().startsWith('['))) {
+        try { data.contentEn = JSON.parse(raw); } catch { data.contentEn = raw; }
+      } else {
+        data.contentEn = raw;
+      }
     } else {
       data.contentEn = Prisma.JsonNull;
     }
@@ -239,17 +245,17 @@ export async function updateArticle(idOrSlug: string, articleData: Partial<Artic
     if (articleData.content !== undefined) {
       const raw = articleData.content;
       if (typeof raw === 'string' && (raw.trimStart().startsWith('{') || raw.trimStart().startsWith('['))) {
-        try { data.content = JSON.parse(raw); } catch { data.content = raw; }
+        try { data.content = JSON.parse(raw); } catch { data.content = raw || Prisma.JsonNull; }
       } else {
-        data.content = raw ?? Prisma.JsonNull;
+        data.content = raw || Prisma.JsonNull;
       }
     }
     if (articleData.contentEn !== undefined) {
       const raw = articleData.contentEn;
       if (typeof raw === 'string' && (raw.trimStart().startsWith('{') || raw.trimStart().startsWith('['))) {
-        try { data.contentEn = JSON.parse(raw); } catch { data.contentEn = raw; }
+        try { data.contentEn = JSON.parse(raw); } catch { data.contentEn = raw || Prisma.JsonNull; }
       } else {
-        data.contentEn = raw ?? Prisma.JsonNull;
+        data.contentEn = raw || Prisma.JsonNull;
       }
     }
 
