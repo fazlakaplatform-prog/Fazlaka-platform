@@ -141,6 +141,8 @@ export default function AddArticlePage() {
   const [excerptMobileEn, setExcerptMobileEn] = useState('');
   const [content, setContent] = useState('');
   const [contentEn, setContentEn] = useState('');
+  const [contentMobile, setContentMobile] = useState('');
+  const [contentMobileEn, setContentMobileEn] = useState('');
   const [selectedSeason, setSelectedSeason] = useState<SeasonOption | null>(null);
   const [selectedEpisode, setSelectedEpisode] = useState<EpisodeOption | null>(null);
   const [seasons, setSeasons] = useState<Season[]>([]);
@@ -220,6 +222,7 @@ export default function AddArticlePage() {
       excerpt, excerptEn,
       excerptMobile, excerptMobileEn,
       content, contentEn,
+      contentMobile, contentMobileEn,
       featuredImageUrl, featuredImageUrlEn,
       seasonId: selectedSeason ? selectedSeason.value : null,
       episodeId: selectedEpisode ? selectedEpisode.value : null,
@@ -296,8 +299,12 @@ export default function AddArticlePage() {
                 <textarea value={excerptMobile} onChange={(e) => setExcerptMobile(e.target.value)} dir="rtl" className="w-full p-3 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white" rows={3} placeholder="Mobile-specific excerpt..." />
               </div>
               <div className="mb-4">
-                <label className="block text-sm font-medium mb-2">Content (Arabic)</label>
+                <label className="block text-sm font-medium mb-2">Content (Arabic) <span className="text-gray-400 text-xs">(website - HTML)</span></label>
                 <SimpleTextEditor content={content} onChange={setContent} language="ar" />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-2">Mobile Content (Arabic) <span className="text-gray-400 text-xs">(plain text - shown in app)</span></label>
+                <textarea value={contentMobile} onChange={(e) => setContentMobile(e.target.value)} dir="rtl" className="w-full p-3 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white" rows={4} placeholder="Mobile-specific content..." />
               </div>
               <div className="mb-4">
                 <label className="block text-sm font-medium mb-2">Featured Image (Arabic)</label>
@@ -333,8 +340,12 @@ export default function AddArticlePage() {
                 <textarea value={excerptMobileEn} onChange={(e) => setExcerptMobileEn(e.target.value)} className="w-full p-3 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white" rows={3} placeholder="Mobile-specific excerpt..." />
               </div>
               <div className="mb-4">
-                <label className="block text-sm font-medium mb-2">Content (English)</label>
+                <label className="block text-sm font-medium mb-2">Content (English) <span className="text-gray-400 text-xs">(website - HTML)</span></label>
                 <SimpleTextEditor content={contentEn} onChange={setContentEn} language="en" />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-2">Mobile Content (English) <span className="text-gray-400 text-xs">(plain text - shown in app)</span></label>
+                <textarea value={contentMobileEn} onChange={(e) => setContentMobileEn(e.target.value)} className="w-full p-3 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white" rows={4} placeholder="Mobile-specific content..." />
               </div>
               <div className="mb-4">
                 <label className="block text-sm font-medium mb-2">Featured Image (English)</label>

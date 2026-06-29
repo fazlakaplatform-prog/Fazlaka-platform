@@ -17,6 +17,7 @@ interface Article {
   excerpt?: string; excerptEn?: string;
   excerptMobile?: string; excerptMobileEn?: string;
   content?: Record<string, unknown>; contentEn?: Record<string, unknown>;
+  contentMobile?: string; contentMobileEn?: string;
   featuredImageUrl?: string; featuredImageUrlEn?: string;
   season?: Season | null;
   episode?: Episode | null;
@@ -99,6 +100,8 @@ export default function EditArticlePage() {
   const [excerptMobileEn, setExcerptMobileEn] = useState('');
   const [content, setContent] = useState('');
   const [contentEn, setContentEn] = useState('');
+  const [contentMobile, setContentMobile] = useState('');
+  const [contentMobileEn, setContentMobileEn] = useState('');
   const [selectedSeason, setSelectedSeason] = useState<SeasonOption | null>(null);
   const [selectedEpisode, setSelectedEpisode] = useState<EpisodeOption | null>(null);
   const [seasons, setSeasons] = useState<Season[]>([]);
@@ -138,6 +141,8 @@ export default function EditArticlePage() {
         setExcerptMobileEn(article.excerptMobileEn || '');
         setContent(typeof article.content === 'string' ? article.content : JSON.stringify(article.content || ''));
         setContentEn(typeof article.contentEn === 'string' ? article.contentEn : JSON.stringify(article.contentEn || ''));
+        setContentMobile(article.contentMobile || '');
+        setContentMobileEn(article.contentMobileEn || '');
         setFeaturedImageUrl(article.featuredImageUrl || '');
         setFeaturedImageUrlEn(article.featuredImageUrlEn || '');
         
@@ -201,6 +206,7 @@ export default function EditArticlePage() {
       excerpt, excerptEn,
       excerptMobile, excerptMobileEn,
       content, contentEn,
+      contentMobile, contentMobileEn,
       featuredImageUrl, featuredImageUrlEn,
       seasonId: selectedSeason?.value || null,
       episodeId: selectedEpisode?.value || null,
@@ -257,7 +263,8 @@ export default function EditArticlePage() {
               <div className="mb-4"><label className="block text-sm font-medium mb-2 dark:text-gray-300">Title</label><input type="text" value={title} onChange={(e) => setTitle(e.target.value)} className="w-full p-3 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white" dir="rtl" /></div>
               <div className="mb-4"><label className="block text-sm font-medium mb-2 dark:text-gray-300">Excerpt <span className="text-gray-400 text-xs">(website - HTML)</span></label><SimpleTextEditor content={excerpt} onChange={setExcerpt} language="ar" /></div>
               <div className="mb-4"><label className="block text-sm font-medium mb-2 dark:text-gray-300">Mobile Excerpt <span className="text-gray-400 text-xs">(plain text - shown in app)</span></label><textarea value={excerptMobile} onChange={(e) => setExcerptMobile(e.target.value)} dir="rtl" className="w-full p-3 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white" rows={3} /></div>
-              <div className="mb-4"><label className="block text-sm font-medium mb-2 dark:text-gray-300">Content</label><SimpleTextEditor content={content} onChange={setContent} language="ar" /></div>
+              <div className="mb-4"><label className="block text-sm font-medium mb-2 dark:text-gray-300">Content <span className="text-gray-400 text-xs">(website - HTML)</span></label><SimpleTextEditor content={content} onChange={setContent} language="ar" /></div>
+              <div className="mb-4"><label className="block text-sm font-medium mb-2 dark:text-gray-300">Mobile Content <span className="text-gray-400 text-xs">(plain text - shown in app)</span></label><textarea value={contentMobile} onChange={(e) => setContentMobile(e.target.value)} dir="rtl" className="w-full p-3 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white" rows={4} placeholder="Mobile-specific content..." /></div>
               <div className="mb-4">
                 <label className="block text-sm font-medium mb-2 dark:text-gray-300">Image</label>
                 <div className="flex items-center gap-3">
@@ -277,7 +284,8 @@ export default function EditArticlePage() {
               <div className="mb-4"><label className="block text-sm font-medium mb-2 dark:text-gray-300">Title</label><input type="text" value={titleEn} onChange={(e) => setTitleEn(e.target.value)} className="w-full p-3 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white" /></div>
               <div className="mb-4"><label className="block text-sm font-medium mb-2 dark:text-gray-300">Excerpt</label><SimpleTextEditor content={excerptEn} onChange={setExcerptEn} language="en" /></div>
               <div className="mb-4"><label className="block text-sm font-medium mb-2 dark:text-gray-300">Mobile Excerpt <span className="text-gray-400 text-xs">(plain text)</span></label><textarea value={excerptMobileEn} onChange={(e) => setExcerptMobileEn(e.target.value)} className="w-full p-3 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white" rows={3} /></div>
-              <div className="mb-4"><label className="block text-sm font-medium mb-2 dark:text-gray-300">Content</label><SimpleTextEditor content={contentEn} onChange={setContentEn} language="en" /></div>
+              <div className="mb-4"><label className="block text-sm font-medium mb-2 dark:text-gray-300">Content <span className="text-gray-400 text-xs">(website - HTML)</span></label><SimpleTextEditor content={contentEn} onChange={setContentEn} language="en" /></div>
+              <div className="mb-4"><label className="block text-sm font-medium mb-2 dark:text-gray-300">Mobile Content <span className="text-gray-400 text-xs">(plain text - shown in app)</span></label><textarea value={contentMobileEn} onChange={(e) => setContentMobileEn(e.target.value)} className="w-full p-3 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white" rows={4} placeholder="Mobile-specific content..." /></div>
               <div className="mb-4">
                 <label className="block text-sm font-medium mb-2 dark:text-gray-300">Image</label>
                 <div className="flex items-center gap-3">

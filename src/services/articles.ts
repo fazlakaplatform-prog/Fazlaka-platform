@@ -20,6 +20,7 @@ export interface ArticleWithLocalized extends Omit<Article, 'season' | 'episode'
   localizedTitle?: string;
   localizedExcerpt?: string | null;
   localizedExcerptMobile?: string | null;
+  localizedContentMobile?: string | null;
   localizedContent?: PortableTextBlock[] | null;
   localizedFeaturedImageUrl?: string | null;
   season?: {
@@ -49,6 +50,7 @@ function mapArticle(article: PopulatedArticle, language: string): ArticleWithLoc
     localizedTitle: language === 'ar' ? article.title : article.titleEn,
     localizedExcerpt: language === 'ar' ? article.excerpt : article.excerptEn,
     localizedExcerptMobile: language === 'ar' ? article.excerptMobile : article.excerptMobileEn,
+    localizedContentMobile: language === 'ar' ? article.contentMobile : article.contentMobileEn,
     localizedContent: (language === 'ar' ? article.content : article.contentEn) as PortableTextBlock[] | null,
     localizedFeaturedImageUrl: language === 'ar' ? article.featuredImageUrl : article.featuredImageUrlEn,
     season: article.season ? {
@@ -195,6 +197,14 @@ export async function updateArticle(idOrSlug: string, articleData: Partial<Artic
 
     // تم إصلاح الخطأ: استبدال any بـ Record<string, unknown>
     const data: Record<string, unknown> = { ...articleData };
+
+    // Handle JSON content fields
+    if (typeof data.content === 'string') {
+      try { data.content = JSON.parse(data.content as string); } catch { /* keep as string */ }
+    }
+    if (typeof data.contentEn === 'string') {
+      try { data.contentEn = JSON.parse(data.contentEn as string); } catch { /* keep as string */ }
+    }
 
     // Handle relations
     if (articleData.seasonId) {
