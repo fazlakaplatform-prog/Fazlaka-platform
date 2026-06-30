@@ -1,20 +1,18 @@
-// src/app/api/friends/accept/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import { getUserIdFromRequest } from "@/lib/auth-helper";
 import { prisma } from "@/lib/prisma";
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const userId = await getUserIdFromRequest(req);
+    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const { requesterId, action } = await req.json();
+    const { requestId, action } = await req.json();
 
     const friendship = await prisma.friendship.findFirst({
       where: {
-        requesterId,
-        receiverId: session.user.id,
+        id: requestId,
+        receiverId: userId,
         status: "PENDING",
       },
     });
@@ -26,10 +24,6 @@ export async function POST(req: NextRequest) {
         where: { id: friendship.id },
         data: { status: "ACCEPTED" },
       });
-
-      // تم إزالة كود إنشاء المحادثة التلقائي هنا
-      // المحادثة سيتم إنشاؤها تلقائياً عند إرسال أول رسالة في ملف messages/route.ts
-      // هذا يمنع تكرار المحادثات الفارغة
 
       return NextResponse.json({ updated });
     } else {

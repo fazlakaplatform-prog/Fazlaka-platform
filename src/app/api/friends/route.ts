@@ -1,21 +1,19 @@
-// src/app/api/friends/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import { getUserIdFromRequest } from "@/lib/auth-helper";
 import { prisma } from "@/lib/prisma";
 
-// جلب الأصدقاء (كما هو)
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const userId = await getUserIdFromRequest(req);
+    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const requests = await prisma.friendship.findMany({
+    const friendships = await prisma.friendship.findMany({
       where: {
         OR: [
-          { requesterId: session.user.id },
-          { receiverId: session.user.id },
+          { requesterId: userId },
+          { receiverId: userId },
         ],
+        status: "ACCEPTED",
       },
       include: {
         requester: { select: { id: true, name: true, image: true } },
@@ -23,28 +21,40 @@ export async function GET() {
       },
     });
 
-    return NextResponse.json(requests);
+    const friends = friendships.map((f) => {
+      const isRequester = f.requesterId === userId;
+      const friendUser = isRequester ? f.receiver : f.requester;
+      return {
+        id: f.id,
+        userId,
+        friendId: friendUser.id,
+        status: f.status,
+        user: friendUser,
+        createdAt: f.createdAt.toISOString(),
+      };
+    });
+
+    return NextResponse.json({ friends });
   } catch (error) {
     return NextResponse.json({ error: "Internal Error" }, { status: 500 });
   }
 }
 
-// إرسال طلب صداقة (كما هو)
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const userId = await getUserIdFromRequest(req);
+    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const { receiverId } = await req.json();
-    if (session.user.id === receiverId) {
+    if (userId === receiverId) {
       return NextResponse.json({ error: "Cannot add yourself" }, { status: 400 });
     }
 
     const existing = await prisma.friendship.findFirst({
       where: {
         OR: [
-          { requesterId: session.user.id, receiverId },
-          { requesterId: receiverId, receiverId: session.user.id },
+          { requesterId: userId, receiverId },
+          { requesterId: receiverId, receiverId: userId },
         ],
       },
     });
@@ -52,7 +62,7 @@ export async function POST(req: NextRequest) {
     if (existing) return NextResponse.json({ error: "Request already exists" }, { status: 400 });
 
     const request = await prisma.friendship.create({
-      data: { requesterId: session.user.id, receiverId },
+      data: { requesterId: userId, receiverId },
     });
 
     return NextResponse.json(request);
@@ -61,23 +71,21 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// --- جديد: حذف الصداقة (Unfriend) ---
 export async function DELETE(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const userId = await getUserIdFromRequest(req);
+    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const { searchParams } = new URL(req.url);
-    const friendId = searchParams.get("friendId"); // معرف المستخدم الآخر
+    const friendId = searchParams.get("friendId");
 
     if (!friendId) return NextResponse.json({ error: "FriendId required" }, { status: 400 });
 
-    // البحث عن علاقة الصداقة وحذفها
     await prisma.friendship.deleteMany({
       where: {
         OR: [
-          { requesterId: session.user.id, receiverId: friendId },
-          { requesterId: friendId, receiverId: session.user.id },
+          { requesterId: userId, receiverId: friendId },
+          { requesterId: friendId, receiverId: userId },
         ],
       },
     });

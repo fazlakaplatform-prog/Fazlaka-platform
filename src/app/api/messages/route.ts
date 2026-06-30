@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import { getUserIdFromRequest } from "@/lib/auth-helper";
 import { prisma } from "@/lib/prisma";
 import { pusherServer } from "@/lib/pusher";
 
-// Helper: التحقق من ملكية الرسالة ومدة الـ 10 دقائق
 async function validateMessageAccess(messageId: string, userId: string) {
   const message = await prisma.message.findUnique({
     where: { id: messageId },
@@ -16,17 +14,16 @@ async function validateMessageAccess(messageId: string, userId: string) {
 
   const tenMinutes = 10 * 60 * 1000;
   const isEditable = new Date().getTime() - new Date(message.createdAt).getTime() < tenMinutes;
-  
+
   if (!isEditable) return { error: "Time limit exceeded (10 mins)", status: 403 };
 
   return { message, isEditable };
 }
 
-// --- GET: جلب الرسائل ---
 export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const userId = await getUserIdFromRequest(req);
+    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const { searchParams } = new URL(req.url);
     const conversationId = searchParams.get("conversationId");
@@ -38,7 +35,7 @@ export async function GET(req: NextRequest) {
       const existingConversation = await prisma.conversation.findFirst({
         where: {
           AND: [
-            { participants: { some: { userId: session.user.id } } },
+            { participants: { some: { userId } } },
             { participants: { some: { userId: friendId } } },
           ],
         },
@@ -51,7 +48,7 @@ export async function GET(req: NextRequest) {
     }
 
     const participant = await prisma.conversationParticipant.findFirst({
-      where: { conversationId: targetConversationId, userId: session.user.id },
+      where: { conversationId: targetConversationId, userId },
     });
     if (!participant) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
@@ -68,16 +65,14 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// --- POST: إرسال رسالة (نص أو صورة) ---
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const userId = await getUserIdFromRequest(req);
+    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await req.json();
     const { conversationId: inputConvId, content, receiverId, imageUrl } = body;
 
-    // يجب وجود محتوى نصي أو صورة
     if (!content && !imageUrl) return NextResponse.json({ error: "Content or Image required" }, { status: 400 });
 
     let conversationId = inputConvId;
@@ -86,8 +81,8 @@ export async function POST(req: NextRequest) {
       const friendship = await prisma.friendship.findFirst({
         where: {
           OR: [
-            { requesterId: session.user.id, receiverId },
-            { requesterId: receiverId, receiverId: session.user.id },
+            { requesterId: userId, receiverId },
+            { requesterId: receiverId, receiverId: userId },
           ],
           status: "ACCEPTED"
         }
@@ -97,7 +92,7 @@ export async function POST(req: NextRequest) {
       const existingConv = await prisma.conversation.findFirst({
         where: {
           AND: [
-            { participants: { some: { userId: session.user.id } } },
+            { participants: { some: { userId } } },
             { participants: { some: { userId: receiverId } } },
           ],
         },
@@ -109,7 +104,7 @@ export async function POST(req: NextRequest) {
         const newConv = await prisma.conversation.create({
           data: {
             participants: {
-              create: [{ userId: session.user.id }, { userId: receiverId }],
+              create: [{ userId }, { userId: receiverId }],
             },
           },
         });
@@ -120,11 +115,11 @@ export async function POST(req: NextRequest) {
     if (!conversationId) return NextResponse.json({ error: "Missing context" }, { status: 400 });
 
     const message = await prisma.message.create({
-      data: { 
-        conversationId, 
-        senderId: session.user.id, 
-        content: content || "", 
-        imageUrl: imageUrl || null 
+      data: {
+        conversationId,
+        senderId: userId,
+        content: content || "",
+        imageUrl: imageUrl || null
       },
       include: { sender: { select: { id: true, name: true, image: true } } },
     });
@@ -137,16 +132,15 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// --- PUT: تعديل رسالة ---
 export async function PUT(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const userId = await getUserIdFromRequest(req);
+    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const { messageId, content } = await req.json();
     if (!messageId || !content) return NextResponse.json({ error: "Missing data" }, { status: 400 });
 
-    const validation = await validateMessageAccess(messageId, session.user.id);
+    const validation = await validateMessageAccess(messageId, userId);
     if (validation.error) return NextResponse.json({ error: validation.error }, { status: validation.status });
 
     const updatedMessage = await prisma.message.update({
@@ -167,18 +161,17 @@ export async function PUT(req: NextRequest) {
   }
 }
 
-// --- DELETE: حذف رسالة ---
 export async function DELETE(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const userId = await getUserIdFromRequest(req);
+    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const { searchParams } = new URL(req.url);
     const messageId = searchParams.get("messageId");
 
     if (!messageId) return NextResponse.json({ error: "Message ID required" }, { status: 400 });
 
-    const validation = await validateMessageAccess(messageId, session.user.id);
+    const validation = await validateMessageAccess(messageId, userId);
     if (validation.error) return NextResponse.json({ error: validation.error }, { status: validation.status });
 
     await prisma.message.delete({ where: { id: messageId } });
